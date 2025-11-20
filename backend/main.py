@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = FastAPI(title="Guru AI - Your Personal Study Guru")
+app = FastAPI(title="Guru AI - India's #1 Free CBSE Teacher 🧘‍♂️")
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,23 +26,36 @@ class Query(BaseModel):
     standard: str = "10"
     subject: str = "General"
 
+# Multiple free models with fallback (429-proof!)
+FREE_MODELS = [
+    "deepseek/deepseek-r1:free",
+    "google/gemini-flash-1.5-exp:free",
+    "mistralai/mistral-7b-instruct:free",
+    "openchat/openchat-8b:free",
+    "qwen/qwen-2.5-7b-instruct:free"
+]
+
 @app.post("/guru")
 async def talk_to_guru(query: Query):
-    try:
-        response = client.chat.completions.create(
-            model="deepseek/deepseek-r1:free",   # ← OFFICIAL DEEPSEEK R1 FREE (o1 LEVEL!)
-            messages=[
-                {"role": "system", "content": f"Namaste! 🙏 Main Guru hoon – Class {query.standard} CBSE ka sabse powerful AI teacher! Step-by-step reasoning dunga, full explanation Hindi+English mein, examples, diagram describe karunga aur motivate bhi karunga. Chalo padhai karte hain! 🚀"},
-                {"role": "user", "content": query.message}
-            ],
-            temperature=0.7,
-            max_tokens=2500
-        )
-        reply = response.choices[0].message.content.strip()
-        return {"reply": reply}
-    
-    except Exception as e:
-        return {"reply": f"Error aa gaya bhai: {str(e)} – ek baar server restart kar do!"}
+    system_prompt = f"Namaste! 🙏 Main Guru hoon – Class {query.standard} CBSE ka sabse powerful AI teacher! Step-by-step reasoning dunga, full explanation Hindi+English mein, examples, diagrams describe karunga aur full motivation bhi! Chalo padhai karte hain! 🚀"
+
+    for model in FREE_MODELS:
+        try:
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": query.message}
+                ],
+                temperature=0.7,
+                max_tokens=3000
+            )
+            reply = response.choices[0].message.content.strip()
+            return {"reply": reply}
+        except Exception as e:
+            continue  # Next model try karo
+
+    return {"reply": "Bhai thodi der baad try karo, sab models busy hain! Main jaldi wapas aaunga 💪"}
 
 @app.get("/")
 def home():
