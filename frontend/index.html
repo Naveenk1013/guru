@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guru AI Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.7/katex.min.css">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-light: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 10;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            color: var(--primary-color);
+            font-size: 1.75rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--bg-color);
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+
+        .chat-history {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .chat-history-item {
+            padding: 0.75rem;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chat-history-item:hover {
+            background-color: var(--bg-color);
+        }
+
+        .chat-history-item.active {
+            background-color: rgba(37, 99, 235, 0.1);
+            color: var(--primary-color);
+        }
+
+        .chat-history-icon {
+            font-size: 1rem;
+        }
+
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 1.25rem;
+            border-radius: var(--radius);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .user-message {
+            align-self: flex-end;
+            background-color: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 0.25rem;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .user-avatar {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .ai-avatar {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .message-content {
+            line-height: 1.7;
+        }
+
+        .message-content p {
+            margin-bottom: 0.75rem;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-content code {
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .message-content pre {
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .message-content blockquote {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 1rem;
+            margin: 1rem 0;
+            color: var(--text-secondary);
+        }
+
+        .message-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .message-content th, .message-content td {
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            text-align: left;
+        }
+
+        .message-content th {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+        .message-content ul, .message-content ol {
+            padding-left: 1.5rem;
+            margin: 0.75rem 0;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1.25rem;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            align-self: flex-start;
+            max-width: 85%;
+            border-bottom-left-radius: 0.25rem;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        .chat-input-container {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            align-items: flex-end;
+            gap: 1rem;
+            max-width: 100%;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1rem;
+            transition: all 0.2s;
+        }
+
+        .chat-input-wrapper:focus-within {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .chat-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            background: transparent;
+            resize: none;
+            font-size: 1rem;
+            line-height: 1.5;
+            max-height: 120px;
+            min-height: 24px;
+        }
+
+        .send-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .send-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .send-btn:disabled {
+            background-color: var(--text-secondary);
+            cursor: not-allowed;
+        }
+
+        .welcome-screen {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            gap: 2rem;
+        }
+
+        .welcome-icon {
+            font-size: 4rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .welcome-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 2rem;
+        }
+
+        .capabilities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 800px;
+        }
+
+        .capability-card {
+            background-color: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.2s;
+        }
+
+        .capability-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .capability-icon {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .capability-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .capability-desc {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-10px); }
+        }
+
+        .math-display {
+            overflow-x: auto;
+            margin: 1rem 0;
+            padding: 0.5rem 0;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .message {
+                max-width: 95%;
+            }
+            
+            .welcome-title {
+                font-size: 2rem;
+            }
+            
+            .capabilities-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <i class="fas fa-brain logo-icon"></i>
+            <span class="logo-text">Guru AI</span>
+        </div>
+        <div class="header-actions">
+            <button class="btn btn-outline">
+                <i class="fas fa-history"></i>
+                History
+            </button>
+            <button class="btn btn-primary">
+                <i class="fas fa-user"></i>
+                Account
+            </button>
+        </div>
+    </header>
+    
+    <main>
+        <div class="sidebar">
+            <button class="btn btn-primary new-chat-btn" id="newChatBtn">
+                <i class="fas fa-plus"></i>
+                New Chat
+            </button>
+            <div class="chat-history">
+                <div class="chat-history-item active">
+                    <i class="fas fa-message chat-history-icon"></i>
+                    <span>Mathematical Concepts</span>
+                </div>
+                <div class="chat-history-item">
+                    <i class="fas fa-message chat-history-icon"></i>
+                    <span>Programming Help</span>
+                </div>
+                <div class="chat-history-item">
+                    <i class="fas fa-message chat-history-icon"></i>
+                    <span>Science Questions</span>
+                </div>
+                <div class="chat-history-item">
+                    <i class="fas fa-message chat-history-icon"></i>
+                    <span>Writing Assistance</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome screen shown when no messages -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div>
+                        <i class="fas fa-robot welcome-icon"></i>
+                        <h1 class="welcome-title">Welcome to Guru AI</h1>
+                        <p class="welcome-subtitle">Your intelligent assistant for complex problem solving, mathematical expressions, and professional content generation.</p>
+                    </div>
+                    
+                    <div class="capabilities-grid">
+                        <div class="capability-card">
+                            <i class="fas fa-square-root-alt capability-icon"></i>
+                            <h3 class="capability-title">Mathematical Expressions</h3>
+                            <p class="capability-desc">Solve complex equations and render mathematical notation beautifully.</p>
+                        </div>
+                        <div class="capability-card">
+                            <i class="fas fa-code capability-icon"></i>
+                            <h3 class="capability-title">Code Generation</h3>
+                            <p class="capability-desc">Get help with programming in multiple languages with syntax highlighting.</p>
+                        </div>
+                        <div class="capability-card">
+                            <i class="fas fa-chart-line capability-icon"></i>
+                            <h3 class="capability-title">Data Analysis</h3>
+                            <p class="capability-desc">Interpret and visualize data with clear explanations and insights.</p>
+                        </div>
+                        <div class="capability-card">
+                            <i class="fas fa-file-alt capability-icon"></i>
+                            <h3 class="capability-title">Content Creation</h3>
+                            <p class="capability-desc">Generate professional documents, reports, and articles with proper formatting.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chat messages will be dynamically added here -->
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="chat-input-wrapper">
+                    <textarea class="chat-input" id="chatInput" placeholder="Message Guru AI..." rows="1"></textarea>
+                    <button class="send-btn" id="sendButton">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chatMessages');
+            const chatInput = document.getElementById('chatInput');
+            const sendButton = document.getElementById('sendButton');
+            const newChatBtn = document.getElementById('newChatBtn');
+            const welcomeScreen = document.getElementById('welcomeScreen');
+            
+            let currentMessageId = null;
+            let isProcessing = false;
+            
+            // Auto-resize textarea
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+            
+            // Send message on button click
+            sendButton.addEventListener('click', sendMessage);
+            
+            // Send message on Enter key (but allow Shift+Enter for new line)
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // New chat button
+            newChatBtn.addEventListener('click', function() {
+                chatMessages.innerHTML = '';
+                welcomeScreen.style.display = 'flex';
+                chatInput.value = '';
+                chatInput.style.height = 'auto';
+                currentMessageId = null;
+            });
+            
+            async function sendMessage() {
+                const message = chatInput.value.trim();
+                if (!message || isProcessing) return;
+                
+                // Hide welcome screen if it's the first message
+                if (welcomeScreen.style.display !== 'none') {
+                    welcomeScreen.style.display = 'none';
+                }
+                
+                // Add user message to chat
+                addMessage(message, 'user');
+                
+                // Clear input and disable send button
+                chatInput.value = '';
+                chatInput.style.height = 'auto';
+                sendButton.disabled = true;
+                isProcessing = true;
+                
+                // Show typing indicator
+                const typingIndicator = createTypingIndicator();
+                chatMessages.appendChild(typingIndicator);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                
+                try {
+                    // Send request to your backend
+                    const response = await fetch('https://guru-4vqd.onrender.com/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            message: message,
+                            messageId: currentMessageId
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Remove typing indicator
+                    chatMessages.removeChild(typingIndicator);
+                    
+                    // Add AI response with streaming effect
+                    await streamResponse(data.response || "I'm sorry, I couldn't process your request.");
+                    
+                    // Update message ID for context if provided
+                    if (data.messageId) {
+                        currentMessageId = data.messageId;
+                    }
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    
+                    // Remove typing indicator
+                    chatMessages.removeChild(typingIndicator);
+                    
+                    // Show error message
+                    addMessage("I'm sorry, I encountered an error while processing your request. Please try again.", 'ai');
+                } finally {
+                    sendButton.disabled = false;
+                    isProcessing = false;
+                }
+            }
+            
+            function addMessage(content, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${sender}-message`;
+                
+                const messageHeader = document.createElement('div');
+                messageHeader.className = 'message-header';
+                
+                const avatar = document.createElement('div');
+                avatar.className = `avatar ${sender}-avatar`;
+                
+                if (sender === 'user') {
+                    avatar.innerHTML = '<i class="fas fa-user"></i>';
+                } else {
+                    avatar.innerHTML = '<i class="fas fa-robot"></i>';
+                }
+                
+                const senderName = document.createElement('span');
+                senderName.textContent = sender === 'user' ? 'You' : 'Guru AI';
+                senderName.style.fontWeight = '600';
+                
+                messageHeader.appendChild(avatar);
+                messageHeader.appendChild(senderName);
+                
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                
+                // Use marked to parse markdown
+                messageContent.innerHTML = marked.parse(content);
+                
+                // Render math expressions with KaTeX
+                renderMathInElement(messageContent, {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false},
+                        {left: '\\(', right: '\\)', display: false},
+                        {left: '\\[', right: '\\]', display: true}
+                    ],
+                    throwOnError: false
+                });
+                
+                messageDiv.appendChild(messageHeader);
+                messageDiv.appendChild(messageContent);
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function createTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'typing-indicator';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar ai-avatar';
+                avatar.innerHTML = '<i class="fas fa-robot"></i>';
+                
+                const typingContent = document.createElement('div');
+                typingContent.className = 'typing-content';
+                
+                const typingText = document.createElement('span');
+                typingText.textContent = 'Guru AI is typing';
+                typingText.style.color = 'var(--text-secondary)';
+                typingText.style.marginRight = '0.5rem';
+                
+                const typingDots = document.createElement('div');
+                typingDots.className = 'typing-dots';
+                
+                for (let i = 0; i < 3; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'typing-dot';
+                    typingDots.appendChild(dot);
+                }
+                
+                typingContent.appendChild(typingText);
+                typingContent.appendChild(typingDots);
+                
+                typingDiv.appendChild(avatar);
+                typingDiv.appendChild(typingContent);
+                
+                return typingDiv;
+            }
+            
+            async function streamResponse(responseText) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message ai-message';
+                
+                const messageHeader = document.createElement('div');
+                messageHeader.className = 'message-header';
+                
+                const avatar = document.createElement('div');
+                avatar.className = 'avatar ai-avatar';
+                avatar.innerHTML = '<i class="fas fa-robot"></i>';
+                
+                const senderName = document.createElement('span');
+                senderName.textContent = 'Guru AI';
+                senderName.style.fontWeight = '600';
+                
+                messageHeader.appendChild(avatar);
+                messageHeader.appendChild(senderName);
+                
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                
+                messageDiv.appendChild(messageHeader);
+                messageDiv.appendChild(messageContent);
+                
+                chatMessages.appendChild(messageDiv);
+                
+                // Simulate streaming by adding text gradually
+                let index = 0;
+                const words = responseText.split(' ');
+                
+                function addWord() {
+                    if (index < words.length) {
+                        // Add the next word
+                        const currentText = words.slice(0, index + 1).join(' ');
+                        messageContent.innerHTML = marked.parse(currentText);
+                        
+                        // Render math expressions with KaTeX
+                        renderMathInElement(messageContent, {
+                            delimiters: [
+                                {left: '$$', right: '$$', display: true},
+                                {left: '$', right: '$', display: false},
+                                {left: '\\(', right: '\\)', display: false},
+                                {left: '\\[', right: '\\]', display: true}
+                            ],
+                            throwOnError: false
+                        });
+                        
+                        index++;
+                        
+                        // Scroll to bottom
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                        
+                        // Add a random delay between words to simulate typing
+                        const delay = Math.random() * 50 + 30;
+                        setTimeout(addWord, delay);
+                    }
+                }
+                
+                // Start the streaming effect
+                await new Promise(resolve => {
+                    addWord();
+                    // Set a timeout to resolve when we estimate all words would be displayed
+                    const estimatedTime = words.length * 80;
+                    setTimeout(resolve, estimatedTime);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
