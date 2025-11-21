@@ -28,11 +28,7 @@ class Query(BaseModel):
 
 # Multiple free models with fallback (429-proof!)
 FREE_MODELS = [
-    "deepseek/deepseek-r1:free",
-    "google/gemini-flash-1.5-exp:free",
-    "mistralai/mistral-7b-instruct:free",
-    "openchat/openchat-8b:free",
-    "qwen/qwen-2.5-7b-instruct:free"
+    " deepseek/deepseek-r1-0528:free "
 ]
 
 @app.post("/guru")
