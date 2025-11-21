@@ -28,7 +28,7 @@ class Query(BaseModel):
 
 # Multiple free models with fallback (429-proof!)
 FREE_MODELS = [
-    " deepseek/deepseek-r1-0528:free "
+    "deepseek/deepseek-r1-0528:free",
 ]
 
 @app.post("/guru")
